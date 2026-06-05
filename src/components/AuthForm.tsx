@@ -98,6 +98,23 @@ export default function AuthForm() {
         <button type="submit" disabled={loading} className="entry-enter">
           {loading ? "[ ... ]" : "[ Enter ]"}
         </button>
+        {user && !profile && (
+          <button
+            type="button"
+            disabled={loading}
+            className="entry-enter opacity-55"
+            onClick={() => {
+              signOut()
+                .then(() => {
+                  setUsername("");
+                  setError("");
+                })
+                .catch(() => {});
+            }}
+          >
+            [ Start over ]
+          </button>
+        )}
       </form>
     </section>
   );

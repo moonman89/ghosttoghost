@@ -17,7 +17,8 @@
     "deploy:functions": "bash scripts/deploy-functions.sh",
     "deploy:backend": "bash scripts/deploy-backend.sh",
     "deploy:frontend": "bash scripts/deploy-frontend.sh",
-    "deploy:all": "bash scripts/deploy-all.sh"
+    "deploy:all": "bash scripts/deploy-all.sh",
+    "fix:production": "bash scripts/fix-production-auth.sh"
   },
   "dependencies": {
     "firebase": "^12.14.0",
