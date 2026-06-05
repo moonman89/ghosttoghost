@@ -144,22 +144,24 @@ export default function AuthForm() {
       </div>
 
       <div className="entry-layout">
-        <div className="entry-copy">
-          <p>GhostToGhost</p>
-          <p>Anonymous ghost-to-ghost messaging</p>
-          <p>Direct · Real-time · No identity</p>
+        <div className="entry-brand">
+          <GhostLogo size={26} className="entry-logo__icon" title="GhostToGhost" />
+          <div className="entry-copy">
+            <p className="entry-wordmark">GhostToGhost</p>
+            <p>Anonymous ghost-to-ghost messaging</p>
+            <p>Direct · Real-time · No identity</p>
+          </div>
           <p className="entry-wipe-notice">
+            <span className="entry-wipe-notice__rule" aria-hidden />
             Every ghost self-destructs 24 hours after creation. Messages, chats,
             and your account are permanently wiped — nothing is kept.
           </p>
           {user && !profile && step === "username" && (
-            <p className="mt-2 opacity-70">Finish setup or start over.</p>
+            <p className="entry-hint">Finish setup or start over.</p>
           )}
         </div>
 
-        <div className="entry-center">
-          <GhostLogo size={32} className="entry-logo__icon" title="GhostToGhost" />
-
+        <div className="entry-form-area">
           <div className="entry-form">
             {step === "username" && (
               <div className="entry-actions">

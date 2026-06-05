@@ -7,6 +7,7 @@ import {
   useCallback,
   useMemo,
   ChangeEvent,
+  ClipboardEvent,
   KeyboardEvent,
 } from "react";
 import {
@@ -127,9 +128,8 @@ export default function ChatWindow({
     }
   };
 
-  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || uploading) return;
+  const sendImageFile = useCallback(async (file: File) => {
+    if (uploading || sending) return;
 
     if (!file.type.startsWith("image/")) {
       setUploadError("Only image files are supported.");
@@ -139,6 +139,7 @@ export default function ChatWindow({
     setUploading(true);
     setUploadProgress(0);
     setUploadError(null);
+    setSendError(null);
 
     try {
       await sendImageMessage(chat.id, currentUser, file, setUploadProgress);
@@ -149,11 +150,52 @@ export default function ChatWindow({
     } finally {
       setUploading(false);
       setUploadProgress(0);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    }
+  }, [chat.id, currentUser, uploading, sending]);
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await sendImageFile(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
+
+  const fileFromClipboardItem = (item: DataTransferItem): File | null => {
+    const file = item.getAsFile();
+    if (!file || !item.type.startsWith("image/")) return null;
+    if (file.name) return file;
+    const ext = item.type.split("/")[1] || "png";
+    return new File([file], `screenshot-${Date.now()}.${ext}`, {
+      type: file.type,
+    });
+  };
+
+  const handlePaste = useCallback(
+    async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFile = Array.from(items)
+        .map(fileFromClipboardItem)
+        .find((file): file is File => file !== null);
+
+      if (!imageFile) return;
+
+      e.preventDefault();
+      await sendImageFile(imageFile);
+    },
+    [sendImageFile]
+  );
+
+  useEffect(() => {
+    const onWindowPaste = (e: Event) => {
+      void handlePaste(e as unknown as ClipboardEvent);
+    };
+    window.addEventListener("paste", onWindowPaste);
+    return () => window.removeEventListener("paste", onWindowPaste);
+  }, [handlePaste]);
 
   const typingLabel =
     typers.length === 1
@@ -284,7 +326,7 @@ export default function ChatWindow({
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading || sending}
           className="btn-icon shrink-0"
-          title="Upload image"
+          title="Upload image or paste screenshot"
         >
           {uploading ? "…" : "+"}
         </button>
@@ -295,7 +337,7 @@ export default function ChatWindow({
             handleTyping();
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Write a message"
+          placeholder="Write a message or paste a screenshot"
           rows={1}
           disabled={sending || uploading}
           className="composer-input"
