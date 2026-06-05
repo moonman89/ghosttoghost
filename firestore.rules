@@ -1,0 +1,216 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function trustedClient() {
+      return signedIn() && request.app != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUsername(name) {
+      return name is string
+        && name.size() >= 3
+        && name.size() <= 20
+        && name == name.lower()
+        && name.matches('^[a-z0-9_]+$');
+    }
+
+    function isChatMember(chatId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds;
+    }
+
+    function keysOnlyChanged(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    function noServerManagedMessageFields() {
+      return !request.resource.data.keys().hasAny([
+        'sideEffectsStatus',
+        'sideEffectsReason',
+        'sideEffectsAppliedAt',
+      ]);
+    }
+
+    function validReadReceiptUpdate() {
+      let oldReadBy = resource.data.readBy;
+      let newReadBy = request.resource.data.readBy;
+      return keysOnlyChanged(['readBy'])
+        && newReadBy is list
+        && oldReadBy is list
+        && newReadBy.hasAll(oldReadBy)
+        && newReadBy.size() >= oldReadBy.size()
+        && newReadBy.size() <= oldReadBy.size() + 1
+        && request.auth.uid in newReadBy;
+    }
+
+    function validOwnedStoragePath(chatId) {
+      return request.resource.data.storagePath is string
+        && request.resource.data.storagePath.size() > 0
+        && request.resource.data.storagePath.size() <= 512
+        && request.resource.data.storagePath.matches(
+          '^chatUploads/' + chatId + '/' + request.auth.uid + '/.+'
+        );
+    }
+
+    // ── System (Cloud Functions only via Admin SDK) ──────────────────────
+
+    match /system/{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── Username registry ────────────────────────────────────────────────
+
+    match /usernames/{username} {
+      allow read: if signedIn() && isValidUsername(username);
+
+      allow create: if trustedClient()
+        && isValidUsername(username)
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false;
+
+      allow delete: if trustedClient()
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // ── User profiles ────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      allow read: if signedIn();
+
+      allow create: if trustedClient()
+        && isOwner(userId)
+        && request.resource.data.keys().hasAll(['uid', 'username', 'displayName', 'createdAt', 'updatedAt'])
+        && request.resource.data.uid == userId
+        && isValidUsername(request.resource.data.username)
+        && request.resource.data.displayName == request.resource.data.username
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && exists(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+        && get(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == userId;
+
+      allow update: if trustedClient()
+        && isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.username == resource.data.username
+        && keysOnlyChanged(['displayName', 'updatedAt']);
+
+      allow delete: if trustedClient() && isOwner(userId);
+
+      // ── FCM tokens (push notifications) ────────────────────────────────
+
+      match /fcmTokens/{tokenId} {
+        allow read: if isOwner(userId);
+
+        allow create, update: if trustedClient()
+          && isOwner(userId)
+          && request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.token.size() <= 512
+          && request.resource.data.platform == 'web'
+          && request.resource.data.updatedAt == request.time;
+
+        allow delete: if trustedClient() && isOwner(userId);
+      }
+    }
+
+    // ── Chats (metadata managed by Cloud Functions) ──────────────────────
+
+    match /chats/{chatId} {
+      allow read: if isChatMember(chatId);
+
+      allow create: if trustedClient()
+        && request.auth.uid in request.resource.data.memberIds
+        && request.resource.data.type in ['direct', 'group']
+        && request.resource.data.memberIds.size() >= 2
+        && (
+          request.resource.data.type != 'direct'
+          || request.resource.data.memberIds.size() == 2
+        )
+        && request.resource.data.memberNames.keys().hasAll(request.resource.data.memberIds);
+
+      // lastMessage, lastMessageAt, lastMessageSenderId, updatedAt, unreadCounts
+      // are written only by Cloud Functions (Admin SDK bypasses rules).
+      allow update: if false;
+
+      allow delete: if false;
+
+      // ── Messages ───────────────────────────────────────────────────────
+
+      match /messages/{messageId} {
+        allow read: if isChatMember(chatId);
+
+        allow create: if trustedClient()
+          && isChatMember(chatId)
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.type in ['text', 'image']
+          && request.resource.data.readBy is list
+          && request.resource.data.readBy.size() == 1
+          && request.resource.data.readBy[0] == request.auth.uid
+          && request.resource.data.senderName is string
+          && request.resource.data.senderName.size() > 0
+          && request.resource.data.senderName.size() <= 40
+          && request.resource.data.createdAt == request.time
+          && noServerManagedMessageFields()
+          && (
+            (
+              request.resource.data.type == 'text'
+              && request.resource.data.keys().hasOnly([
+                'senderId', 'senderName', 'text', 'type', 'readBy', 'createdAt'
+              ])
+              && request.resource.data.text is string
+              && request.resource.data.text.size() > 0
+              && request.resource.data.text.size() <= 4000
+            )
+            || (
+              request.resource.data.type == 'image'
+              && request.resource.data.keys().hasOnly([
+                'senderId', 'senderName', 'imageUrl', 'storagePath', 'type', 'readBy', 'createdAt'
+              ])
+              && request.resource.data.imageUrl is string
+              && request.resource.data.imageUrl.size() > 0
+              && request.resource.data.imageUrl.size() <= 2048
+              && validOwnedStoragePath(chatId)
+            )
+          );
+
+        allow update: if trustedClient()
+          && isChatMember(chatId)
+          && validReadReceiptUpdate();
+
+        allow delete: if false;
+      }
+
+      // ── Typing indicators ──────────────────────────────────────────────
+
+      match /typing/{typingUserId} {
+        allow read: if isChatMember(chatId);
+
+        allow create, update: if trustedClient()
+          && typingUserId == request.auth.uid
+          && isChatMember(chatId)
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.username is string
+          && request.resource.data.isTyping is bool
+          && request.resource.data.updatedAt == request.time;
+
+        allow delete: if trustedClient()
+          && isOwner(typingUserId)
+          && isChatMember(chatId);
+      }
+    }
+  }
+}
