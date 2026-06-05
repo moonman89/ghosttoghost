@@ -4,7 +4,12 @@ A **Telegram-style messaging app** with anonymous sign-in, real-time chats, and 
 
 Built with **Next.js** and **Firebase** (Auth, Firestore, Storage, Cloud Functions, App Check, FCM).
 
-**Live Firebase project:** `ghosttoghost`
+| | Link |
+|---|------|
+| **Firebase Console** | [console.firebase.google.com/project/ghosttoghost](https://console.firebase.google.com/project/ghosttoghost) |
+| **GitHub** | [github.com/moonman89/ghosttoghost](https://github.com/moonman89/ghosttoghost) |
+| **Local dev** | [http://localhost:3000](http://localhost:3000) (after `npm run dev`) |
+| **Public app URL** | Not deployed yet — see [Deploy](#deploy) below |
 
 ---
 
@@ -148,6 +153,20 @@ Highlights:
 - Image `storagePath` must match `chatUploads/{chatId}/{uid}/…`
 - Rate limits: 30/min global, 15/min per chat, burst and duplicate-text guards
 - App Check required on all client writes (`request.app != null`)
+
+---
+
+## Deploy
+
+Right now only the **Firebase backend** is deployed (Firestore rules, Storage rules, Cloud Functions). The **Next.js frontend** runs locally — there is no `*.web.app` or `*.firebaseapp.com` URL yet because Firebase Hosting / App Hosting was not configured.
+
+To get a public link:
+
+1. **Firebase App Hosting** (recommended for Next.js) — [App Hosting in Console](https://console.firebase.google.com/project/ghosttoghost/apphosting) → connect the GitHub repo
+2. **Vercel** — import `moonman89/ghosttoghost`, add the same `NEXT_PUBLIC_*` env vars
+3. **Firebase Hosting** — requires a static export (`output: 'export'`); limited for this app (no API routes / SSR)
+
+After deploy, add the live URL to this README and register it in Firebase Console → Authentication → **Authorized domains**.
 
 ---
 

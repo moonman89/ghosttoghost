@@ -1,0 +1,52 @@
+# Firebase App Hosting — https://firebase.google.com/docs/app-hosting/configure
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyB39hNO45-P9WTrJtXz8s8PvAgAuCdePNk
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: ghosttoghost.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: ghosttoghost
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: ghosttoghost.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "619360886337"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:619360886337:web:2c7c4dbce523b2f671f0c0
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Required for Firestore writes in production — set in Console or via secret:
+  # firebase apphosting:secrets:set APPCHECK_RECAPTCHA_SITE_KEY
+  - variable: NEXT_PUBLIC_APPCHECK_RECAPTCHA_SITE_KEY
+    value: ""
+    availability:
+      - BUILD
+      - RUNTIME
