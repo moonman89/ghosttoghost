@@ -91,16 +91,12 @@ service cloud.firestore {
     match /usernames/{username} {
       allow read: if signedIn() && isValidUsername(username);
 
-      allow create: if trustedClient()
-        && isValidUsername(username)
-        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.createdAt == request.time;
+      // Created by registerGhost Cloud Function (Admin SDK).
+      allow create: if false;
 
       allow update: if false;
 
-      allow delete: if trustedClient()
-        && resource.data.uid == request.auth.uid;
+      allow delete: if false;
     }
 
     // ── User profiles ────────────────────────────────────────────────────
@@ -108,16 +104,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if signedIn();
 
-      allow create: if trustedClient()
-        && isOwner(userId)
-        && request.resource.data.keys().hasAll(['uid', 'username', 'displayName', 'createdAt', 'updatedAt'])
-        && request.resource.data.uid == userId
-        && isValidUsername(request.resource.data.username)
-        && request.resource.data.displayName == request.resource.data.username
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.updatedAt == request.time
-        && exists(/databases/$(database)/documents/usernames/$(request.resource.data.username))
-        && get(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == userId;
+      // Created by registerGhost Cloud Function (Admin SDK).
+      allow create: if false;
 
       allow update: if trustedClient()
         && isOwner(userId)
@@ -125,7 +113,13 @@ service cloud.firestore {
         && request.resource.data.username == resource.data.username
         && keysOnlyChanged(['displayName', 'updatedAt']);
 
-      allow delete: if trustedClient() && isOwner(userId);
+      allow delete: if false;
+
+      // ── PIN credentials (Cloud Functions only) ─────────────────────────
+
+      match /private/{docId} {
+        allow read, write: if false;
+      }
 
       // ── FCM tokens (push notifications) ────────────────────────────────
 

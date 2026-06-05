@@ -10,10 +10,12 @@
     "build:watch": "tsc --watch"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^6.6.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "typescript": "^5.9.3"
   }
 }

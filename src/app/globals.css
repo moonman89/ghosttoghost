@@ -275,6 +275,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 12px;
   border-bottom: 1px solid var(--hs-line-subtle);
   min-height: var(--header-h);
@@ -480,34 +481,21 @@ body {
   }
 }
 
-.entry-corner {
+.entry-logo {
   position: absolute;
   z-index: 2;
-  font-family: var(--font-ui);
-  font-size: clamp(72px, 9vw, 124px);
-  line-height: 0.8;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.92;
+}
+
+.entry-logo__icon {
   color: var(--hs-white);
-  font-weight: 400;
-}
-
-.entry-corner--tl {
-  left: 26px;
-  top: 26%;
-}
-
-.entry-corner--tr {
-  right: 26px;
-  top: 26%;
-}
-
-.entry-corner--bl {
-  left: 30px;
-  bottom: 26%;
-}
-
-.entry-corner--br {
-  right: 32px;
-  bottom: 26%;
+  filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.12));
 }
 
 .entry-copy {
@@ -529,12 +517,24 @@ body {
   color: var(--hs-white);
 }
 
+.entry-wipe-notice {
+  margin-top: 14px !important;
+  max-width: 16rem;
+  line-height: 1.55 !important;
+  letter-spacing: 0.05em !important;
+  opacity: 0.72;
+  text-transform: none !important;
+}
+
 .entry-form {
   position: absolute;
   z-index: 2;
   right: 28px;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.entry-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -679,6 +679,29 @@ body {
   }
 }
 
+.ghost-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hs-line);
+  background: var(--hs-white);
+  color: var(--hs-blue);
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.ghost-expiry {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hs-faint);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hs-line-subtle);
+  background: var(--hs-frame);
+}
+
 @media (max-width: 640px) {
   .entry-form {
     right: 16px;
@@ -686,6 +709,9 @@ body {
     top: auto;
     bottom: 72px;
     transform: none;
+  }
+
+  .entry-actions {
     align-items: stretch;
   }
 
@@ -695,12 +721,14 @@ body {
 
   .entry-copy {
     top: auto;
-    bottom: 180px;
+    bottom: 200px;
     transform: none;
+    left: 16px;
+    right: 16px;
   }
 
-  .entry-corner {
-    font-size: clamp(48px, 14vw, 72px);
+  .entry-logo {
+    top: 28%;
   }
 
   .modal-panel {

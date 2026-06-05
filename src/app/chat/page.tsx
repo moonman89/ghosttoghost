@@ -8,6 +8,7 @@ import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
 import NewChatModal from "@/components/NewChatModal";
 import EmptyState from "@/components/ui/EmptyState";
+import GhostLogo from "@/components/GhostLogo";
 import { subscribeToChats } from "@/lib/firestore";
 import type { Chat } from "@/types";
 
@@ -55,13 +56,16 @@ function ChatPageContent() {
   return (
     <div className="app-shell">
       <aside className="side-rail" aria-hidden>
-        <span>G</span>
-        <span>T</span>
+        <GhostLogo size={14} className="opacity-45" />
+        <GhostLogo size={14} className="opacity-45" />
       </aside>
 
       <div className="app-main">
         <header className="site-header">
-          <span className="wordmark">GhostToGhost</span>
+          <div className="flex items-center gap-2.5">
+            <GhostLogo size={16} />
+            <span className="wordmark">GhostToGhost</span>
+          </div>
           <span className="label-xs opacity-55">Messages</span>
           <button
             type="button"

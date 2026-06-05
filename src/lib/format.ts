@@ -1,5 +1,20 @@
 type FirestoreDate = { toDate?: () => Date } | null | undefined;
 
+export function formatGhostTimeRemaining(expiresAt: FirestoreDate): string {
+  if (!expiresAt || typeof expiresAt.toDate !== "function") return "";
+  const ms = expiresAt.toDate().getTime() - Date.now();
+  if (ms <= 0) return "Expired";
+  const hours = Math.floor(ms / (60 * 60 * 1000));
+  const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+  if (hours > 0) return `${hours}h ${minutes}m left`;
+  return `${minutes}m left`;
+}
+
+export function isGhostExpired(expiresAt: FirestoreDate): boolean {
+  if (!expiresAt || typeof expiresAt.toDate !== "function") return false;
+  return expiresAt.toDate().getTime() <= Date.now();
+}
+
 export function formatMessageTime(date: FirestoreDate): string {
   if (!date || typeof date.toDate !== "function") return "";
   return date.toDate().toLocaleTimeString([], {

@@ -6,6 +6,7 @@ export interface UserProfile {
   displayName: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  expiresAt?: Timestamp;
 }
 
 export interface Chat {

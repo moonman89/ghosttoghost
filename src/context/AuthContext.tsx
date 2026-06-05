@@ -11,6 +11,8 @@ import {
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getUserProfile } from "@/lib/firestore";
+import { isGhostExpired } from "@/lib/format";
+import { signOut } from "@/lib/auth";
 import type { UserProfile } from "@/types";
 
 interface AuthContextValue {
@@ -39,6 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const p = await getUserProfile(uid);
+      if (p && isGhostExpired(p.expiresAt)) {
+        await signOut().catch(() => {});
+        setProfile(null);
+        setError(
+          "Your ghost expired. Everything was wiped after 24 hours — create a new one."
+        );
+        return;
+      }
       setProfile(p);
     } catch (err) {
       setProfile(null);
@@ -49,8 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (user) {
-      await loadProfile(user.uid);
+    const uid = auth.currentUser?.uid ?? user?.uid;
+    if (uid) {
+      await loadProfile(uid);
     }
   }, [user, loadProfile]);
 
