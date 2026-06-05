@@ -40,10 +40,11 @@ service cloud.firestore {
         && request.auth.uid in chatDoc(chatId).data.memberIds;
     }
 
+    // Use resource.data (not get()) so list/query reads work for chat lookups.
     function canReadChat(chatId) {
       return signedIn() && (
         !chatExists(chatId)
-        || request.auth.uid in chatDoc(chatId).data.memberIds
+        || request.auth.uid in resource.data.memberIds
       );
     }
 
