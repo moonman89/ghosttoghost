@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   setDoc,
   addDoc,
@@ -26,12 +25,6 @@ export async function findExistingDirectChat(
   uid2: string
 ): Promise<string | null> {
   const deterministicId = getDirectChatId(uid1, uid2);
-  const deterministicRef = doc(db, "chats", deterministicId);
-  const deterministicSnap = await getDoc(deterministicRef);
-
-  if (deterministicSnap.exists()) {
-    return deterministicId;
-  }
 
   const q = query(
     collection(db, "chats"),
@@ -41,6 +34,10 @@ export async function findExistingDirectChat(
   const snap = await getDocs(q);
 
   for (const chatDoc of snap.docs) {
+    if (chatDoc.id === deterministicId) {
+      return deterministicId;
+    }
+
     const data = chatDoc.data() as Chat;
     if (
       data.memberIds.length === 2 &&

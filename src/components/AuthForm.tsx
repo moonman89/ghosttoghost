@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, FormEvent } from "react";
-import { signInAnonymous } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { signInAnonymous, signOut } from "@/lib/auth";
 import { createUserProfile } from "@/lib/firestore";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AuthForm() {
   const { user, profile, refreshProfile } = useAuth();
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,25 +17,34 @@ export default function AuthForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    const trimmed = username.trim().toLowerCase();
+    let signedInThisAttempt = false;
+    let activeUser = user;
+
     try {
-      const trimmed = username.trim();
       if (trimmed.length < 3) {
         setError("Username must be at least 3 characters.");
         return;
       }
 
-      let activeUser = user;
       if (!activeUser) {
         activeUser = await signInAnonymous();
+        signedInThisAttempt = true;
       }
 
       await createUserProfile(activeUser.uid, { username: trimmed });
       await refreshProfile();
+      router.replace("/chat");
     } catch (err) {
+      if (signedInThisAttempt) {
+        await signOut().catch(() => {});
+      }
+
       const code = (err as { code?: string }).code;
       if (code === "permission-denied") {
         setError(
-          "Could not save profile. Check Firebase Auth (Anonymous) and authorized domains."
+          "Could not save profile. Deploy Firestore rules and add ghosttoghost.web.app to Auth authorized domains."
         );
       } else {
         setError(err instanceof Error ? err.message : "Could not join");
@@ -64,6 +75,9 @@ export default function AuthForm() {
         <p>GhostToGhost</p>
         <p>Anonymous / Direct / Real-time</p>
         <p>Private messaging</p>
+        {user && !profile && (
+          <p className="mt-2 opacity-70">Finish setup with a username.</p>
+        )}
       </div>
 
       <form onSubmit={handleEnter} className="entry-form">

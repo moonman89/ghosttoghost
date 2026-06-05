@@ -4,6 +4,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -28,26 +29,35 @@ export async function createUserProfile(
     throw new Error("Username is already taken");
   }
 
-  // Step 1: Reserve username (rules enforce uniqueness via doc ID).
   const claimRef = doc(db, "usernames", usernameLower);
+  const profileRef = doc(db, "users", uid);
+  let claimCreated = false;
+
   const claimSnap = await getDoc(claimRef);
   if (!claimSnap.exists()) {
     await setDoc(claimRef, {
       uid,
       createdAt: serverTimestamp(),
     });
+    claimCreated = true;
   } else if (claimSnap.data()?.uid !== uid) {
     throw new Error("Username is already taken");
   }
 
-  // Step 2: Create profile (rules require matching username claim).
-  await setDoc(doc(db, "users", uid), {
-    uid,
-    username: usernameLower,
-    displayName: usernameLower,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await setDoc(profileRef, {
+      uid,
+      username: usernameLower,
+      displayName: usernameLower,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    if (claimCreated) {
+      await deleteDoc(claimRef).catch(() => {});
+    }
+    throw error;
+  }
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {

@@ -51,7 +51,12 @@ export default function NewChatModal({
       onChatCreated(chatId);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create chat");
+      const code = (err as { code?: string }).code;
+      if (code === "permission-denied") {
+        setError("Could not create chat. Deploy latest Firestore rules or check sign-in.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to create chat");
+      }
     } finally {
       setLoading(false);
     }
