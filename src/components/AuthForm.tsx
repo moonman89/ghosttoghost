@@ -44,7 +44,7 @@ export default function AuthForm() {
       const code = (err as { code?: string }).code;
       if (code === "permission-denied") {
         setError(
-          "Could not save profile. Deploy Firestore rules and add ghosttoghost.web.app to Auth authorized domains."
+          "Could not save profile. Run: npm run deploy:rules (or npm run fix:production)."
         );
       } else {
         setError(err instanceof Error ? err.message : "Could not join");
