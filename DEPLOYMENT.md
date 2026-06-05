@@ -141,9 +141,11 @@ npm run deploy:all
 
 ## Console checklist (one-time)
 
-- [ ] Anonymous Auth enabled
+- [ ] **Anonymous Auth** enabled
+- [ ] **Authorized domains:** `localhost`, `ghosttoghost.web.app` (required for live site sign-in)
 - [ ] Firestore + Storage initialized
-- [ ] App Check reCAPTCHA key in `.env.local` (and Hosting env if used)
-- [ ] Authorized domains: `localhost`, Hosting URL, Vercel URL (if any)
+- [ ] **App Check** (optional until enforced in rules): reCAPTCHA v3 site key in `.env.local`, then `npm run deploy:frontend`
+
+If sign-up shows “Missing or insufficient permissions” on the live site, add `ghosttoghost.web.app` under Authentication → Authorized domains and redeploy rules (`npm run deploy:rules`).
 
 See [SECURITY_NOTES.md](./SECURITY_NOTES.md) and [TESTING_CHECKLIST.md](./TESTING_CHECKLIST.md).

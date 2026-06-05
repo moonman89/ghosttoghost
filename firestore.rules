@@ -8,8 +8,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Use signedIn() until App Check reCAPTCHA is configured in production.
+    // Then switch to: signedIn() && request.app != null
     function trustedClient() {
-      return signedIn() && request.app != null;
+      return signedIn();
     }
 
     function isOwner(userId) {

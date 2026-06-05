@@ -30,7 +30,14 @@ export default function AuthForm() {
       await createUserProfile(activeUser.uid, { username: trimmed });
       await refreshProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not join");
+      const code = (err as { code?: string }).code;
+      if (code === "permission-denied") {
+        setError(
+          "Could not save profile. Check Firebase Auth (Anonymous) and authorized domains."
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Could not join");
+      }
     } finally {
       setLoading(false);
     }
