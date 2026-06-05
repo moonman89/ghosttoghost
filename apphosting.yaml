@@ -1,3 +1,5 @@
+# Optional legacy config for Git-connected App Hosting backends.
+# Prefer Firebase Hosting: npm run deploy:frontend (see DEPLOYMENT.md).
 # Firebase App Hosting — https://firebase.google.com/docs/app-hosting/configure
 runConfig:
   minInstances: 0

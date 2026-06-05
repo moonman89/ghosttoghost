@@ -39,7 +39,7 @@ export async function registerPushNotifications(
   if (!vapidKey) return;
 
   const registration = await navigator.serviceWorker.register(
-    "/api/firebase-messaging-sw",
+    "/firebase-messaging-sw.js",
     { scope: "/" }
   );
   await navigator.serviceWorker.ready;

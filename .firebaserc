@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "ghosttoghost"
+    "default": "ghosttoghost",
+    "prod": "ghosttoghost"
   }
 }

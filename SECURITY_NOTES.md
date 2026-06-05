@@ -3,19 +3,10 @@
 ## Deploy
 
 ```bash
-# Rules + indexes + storage
-firebase deploy --only firestore:rules,firestore:indexes,storage
-
-# Cloud Functions (message side effects + push)
-cd functions && npm install && npm run build && cd ..
-firebase deploy --only functions
+npm run deploy:backend
 ```
 
-Full deploy:
-
-```bash
-firebase deploy --only firestore:rules,firestore:indexes,storage,functions
-```
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for frontend hosting and script breakdown.
 
 ---
 

@@ -3,14 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": "20"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "bash scripts/generate-messaging-sw.sh && next dev",
+    "build": "bash scripts/generate-messaging-sw.sh && next build",
+    "build:frontend": "bash scripts/generate-messaging-sw.sh && next build",
+    "build:functions": "npm --prefix functions run build",
     "start": "next start",
     "lint": "eslint",
-    "setup:firebase": "bash scripts/setup-firebase.sh"
+    "setup:firebase": "bash scripts/setup-firebase.sh",
+    "deploy:rules": "bash scripts/deploy-rules.sh",
+    "deploy:functions": "bash scripts/deploy-functions.sh",
+    "deploy:backend": "bash scripts/deploy-backend.sh",
+    "deploy:frontend": "bash scripts/deploy-frontend.sh",
+    "deploy:all": "bash scripts/deploy-all.sh"
   },
   "dependencies": {
     "firebase": "^12.14.0",

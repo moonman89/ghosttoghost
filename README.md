@@ -9,7 +9,7 @@ Built with **Next.js** and **Firebase** (Auth, Firestore, Storage, Cloud Functio
 | **Firebase Console** | [console.firebase.google.com/project/ghosttoghost](https://console.firebase.google.com/project/ghosttoghost) |
 | **GitHub** | [github.com/moonman89/ghosttoghost](https://github.com/moonman89/ghosttoghost) |
 | **Local dev** | [http://localhost:3000](http://localhost:3000) (after `npm run dev`) |
-| **Live app** | [ghosttoghost--ghosttoghost.us-central1.hosted.app](https://ghosttoghost--ghosttoghost.us-central1.hosted.app) · [ghosttoghost-1](https://ghosttoghost-1--ghosttoghost.us-central1.hosted.app) |
+| **Deploy guide** | [DEPLOYMENT.md](./DEPLOYMENT.md) |
 
 ---
 
@@ -98,20 +98,22 @@ In [Firebase Console](https://console.firebase.google.com/project/ghosttoghost):
 4. **App Check** → register web app (reCAPTCHA v3)
 5. **Cloud Messaging** → Web Push key pair → VAPID key in `.env.local`
 
-### 4. Deploy backend
-
-```bash
-cd functions && npm install && npm run build && cd ..
-firebase deploy --only firestore:rules,firestore:indexes,storage,functions
-```
-
-### 5. Run locally
+### 4. Run locally
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). No deploy needed for development.
+
+### 5. Deploy (when ready)
+
+```bash
+npm run deploy:backend    # rules + functions
+npm run deploy:frontend   # static site → Firebase Hosting
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full flow.
 
 ---
 
@@ -156,28 +158,18 @@ Highlights:
 
 ---
 
-## Deploy
-
-Right now only the **Firebase backend** is deployed (Firestore rules, Storage rules, Cloud Functions). The **Next.js frontend** runs locally — there is no `*.web.app` or `*.firebaseapp.com` URL yet because Firebase Hosting / App Hosting was not configured.
-
-To get a public link:
-
-1. **Firebase App Hosting** (recommended for Next.js) — [App Hosting in Console](https://console.firebase.google.com/project/ghosttoghost/apphosting) → connect the GitHub repo
-2. **Vercel** — import `moonman89/ghosttoghost`, add the same `NEXT_PUBLIC_*` env vars
-3. **Firebase Hosting** — requires a static export (`output: 'export'`); limited for this app (no API routes / SSR)
-
-After deploy, add the live URL to this README and register it in Firebase Console → Authentication → **Authorized domains**.
-
----
-
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start Next.js dev server |
-| `npm run build` | Production build |
-| `npm run setup:firebase` | Create/link Firebase project and write `.env.local` |
-| `firebase deploy --only …` | Deploy rules, storage, functions |
+| `npm run dev` | Local dev server (no deploy) |
+| `npm run deploy:rules` | Firestore + Storage rules |
+| `npm run deploy:functions` | Cloud Functions |
+| `npm run deploy:backend` | Rules + functions |
+| `npm run deploy:frontend` | Static build → Firebase Hosting |
+| `npm run deploy:all` | Full deploy |
+
+Details: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 
