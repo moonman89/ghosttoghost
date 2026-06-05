@@ -7,7 +7,8 @@ import { registerGhost, loginGhost } from "@/lib/ghost";
 import { useAuth } from "@/context/AuthContext";
 import GhostLogo from "@/components/GhostLogo";
 
-type AuthMode = "welcome" | "create" | "signin";
+type Step = "username" | "pin";
+type Action = "enter" | "create";
 
 function normalizePin(value: string): string {
   return value.replace(/\D/g, "").slice(0, 4);
@@ -35,25 +36,48 @@ function mapGhostError(err: unknown): string {
 export default function AuthForm() {
   const { user, profile, refreshProfile } = useAuth();
   const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>("welcome");
+  const [step, setStep] = useState<Step>("username");
+  const [action, setAction] = useState<Action | null>(null);
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const trimmedUsername = username.trim().toLowerCase();
+
+  const validateUsername = (): boolean => {
+    if (trimmedUsername.length < 3) {
+      setError("Username must be at least 3 characters.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const goToPin = (nextAction: Action) => {
+    if (!validateUsername()) return;
+    setAction(nextAction);
+    setPin("");
+    setError("");
+    setStep("pin");
+  };
+
+  const goBack = () => {
+    setStep("username");
+    setAction(null);
+    setPin("");
+    setError("");
+  };
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const trimmed = username.trim().toLowerCase();
     let signedInThisAttempt = false;
 
     try {
-      if (trimmed.length < 3) {
-        setError("Username must be at least 3 characters.");
-        return;
-      }
+      if (!validateUsername()) return;
       if (pin.length !== 4) {
         setError("PIN must be exactly 4 digits.");
         return;
@@ -66,7 +90,7 @@ export default function AuthForm() {
       await signInAnonymous();
       signedInThisAttempt = true;
 
-      await registerGhost(trimmed, pin);
+      await registerGhost(trimmedUsername, pin);
       await refreshProfile();
       router.replace("/chat");
     } catch (err) {
@@ -84,19 +108,14 @@ export default function AuthForm() {
     setError("");
     setLoading(true);
 
-    const trimmed = username.trim().toLowerCase();
-
     try {
-      if (trimmed.length < 3) {
-        setError("Username must be at least 3 characters.");
-        return;
-      }
+      if (!validateUsername()) return;
       if (pin.length !== 4) {
         setError("PIN must be exactly 4 digits.");
         return;
       }
 
-      const { token } = await loginGhost(trimmed, pin);
+      const { token } = await loginGhost(trimmedUsername, pin);
       await signInWithGhostToken(token);
       await refreshProfile();
       router.replace("/chat");
@@ -107,11 +126,9 @@ export default function AuthForm() {
     }
   };
 
-  const resetForm = () => {
-    setUsername("");
-    setPin("");
-    setError("");
-    setMode("welcome");
+  const handlePinSubmit = (e: FormEvent) => {
+    if (action === "create") return handleCreate(e);
+    return handleSignIn(e);
   };
 
   if (user && profile) {
@@ -126,148 +143,118 @@ export default function AuthForm() {
         <span />
       </div>
 
-      <div className="entry-logo" aria-hidden>
-        <GhostLogo size={36} className="entry-logo__icon" />
-      </div>
+      <div className="entry-layout">
+        <div className="entry-copy">
+          <p>GhostToGhost</p>
+          <p>Anonymous ghost-to-ghost messaging</p>
+          <p>Direct · Real-time · No identity</p>
+          <p className="entry-wipe-notice">
+            Every ghost self-destructs 24 hours after creation. Messages, chats,
+            and your account are permanently wiped — nothing is kept.
+          </p>
+          {user && !profile && step === "username" && (
+            <p className="mt-2 opacity-70">Finish setup or start over.</p>
+          )}
+        </div>
 
-      <div className="entry-copy">
-        <p>GhostToGhost</p>
-        <p>Anonymous ghost-to-ghost messaging</p>
-        <p>Direct · Real-time · No identity</p>
-        <p className="entry-wipe-notice">
-          Every ghost self-destructs 24 hours after creation. Messages, chats,
-          and your account are permanently wiped — nothing is kept.
-        </p>
-        {user && !profile && mode === "welcome" && (
-          <p className="mt-2 opacity-70">Finish setup or start over.</p>
-        )}
-      </div>
+        <div className="entry-center">
+          <GhostLogo size={32} className="entry-logo__icon" title="GhostToGhost" />
 
-      <div className="entry-form">
-        {mode === "welcome" && (
-          <div className="entry-actions">
-            <button
-              type="button"
-              className="entry-enter"
-              onClick={() => {
-                setError("");
-                setMode("create");
-              }}
-            >
-              [ Create ghost ]
-            </button>
-            <button
-              type="button"
-              className="entry-enter"
-              onClick={() => {
-                setError("");
-                setMode("signin");
-              }}
-            >
-              [ Sign in ]
-            </button>
-            {user && !profile && (
-              <button
-                type="button"
-                disabled={loading}
-                className="entry-enter opacity-55"
-                onClick={() => {
-                  signOut()
-                    .then(resetForm)
-                    .catch(() => {});
-                }}
-              >
-                [ Start over ]
-              </button>
+          <div className="entry-form">
+            {step === "username" && (
+              <div className="entry-actions">
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) =>
+                    setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
+                  }
+                  required
+                  minLength={3}
+                  maxLength={20}
+                  autoFocus
+                  className="input-field--entry"
+                />
+                {error && <p className="entry-error">{error}</p>}
+                <div className="entry-cta-row">
+                  <button
+                    type="button"
+                    className="entry-enter"
+                    disabled={loading}
+                    onClick={() => goToPin("enter")}
+                  >
+                    [ Enter ]
+                  </button>
+                  <button
+                    type="button"
+                    className="entry-enter"
+                    disabled={loading}
+                    onClick={() => goToPin("create")}
+                  >
+                    [ Create ghost ]
+                  </button>
+                </div>
+                {user && !profile && (
+                  <button
+                    type="button"
+                    disabled={loading}
+                    className="entry-enter opacity-55"
+                    onClick={() => {
+                      signOut()
+                        .then(() => {
+                          setUsername("");
+                          setPin("");
+                          setError("");
+                          setStep("username");
+                          setAction(null);
+                        })
+                        .catch(() => {});
+                    }}
+                  >
+                    [ Start over ]
+                  </button>
+                )}
+              </div>
+            )}
+
+            {step === "pin" && action && (
+              <form onSubmit={handlePinSubmit} className="entry-actions">
+                <p className="entry-pin-label">@{trimmedUsername}</p>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  placeholder="4-digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(normalizePin(e.target.value))}
+                  required
+                  minLength={4}
+                  maxLength={4}
+                  autoFocus
+                  autoComplete="off"
+                  className="input-field--entry"
+                />
+                {error && <p className="entry-error">{error}</p>}
+                <button type="submit" disabled={loading} className="entry-enter">
+                  {loading
+                    ? "[ ... ]"
+                    : action === "create"
+                      ? "[ Create ]"
+                      : "[ Enter ]"}
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  className="entry-enter opacity-55"
+                  onClick={goBack}
+                >
+                  [ Back ]
+                </button>
+              </form>
             )}
           </div>
-        )}
-
-        {mode === "create" && (
-          <form onSubmit={handleCreate} className="entry-actions">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) =>
-                setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
-              }
-              required
-              minLength={3}
-              maxLength={20}
-              autoFocus
-              className="input-field--entry"
-            />
-            <input
-              type="password"
-              inputMode="numeric"
-              pattern="\d{4}"
-              placeholder="4-digit PIN"
-              value={pin}
-              onChange={(e) => setPin(normalizePin(e.target.value))}
-              required
-              minLength={4}
-              maxLength={4}
-              autoComplete="off"
-              className="input-field--entry"
-            />
-            {error && <p className="entry-error">{error}</p>}
-            <button type="submit" disabled={loading} className="entry-enter">
-              {loading ? "[ ... ]" : "[ Create ]"}
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              className="entry-enter opacity-55"
-              onClick={resetForm}
-            >
-              [ Back ]
-            </button>
-          </form>
-        )}
-
-        {mode === "signin" && (
-          <form onSubmit={handleSignIn} className="entry-actions">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) =>
-                setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))
-              }
-              required
-              minLength={3}
-              maxLength={20}
-              autoFocus
-              className="input-field--entry"
-            />
-            <input
-              type="password"
-              inputMode="numeric"
-              pattern="\d{4}"
-              placeholder="4-digit PIN"
-              value={pin}
-              onChange={(e) => setPin(normalizePin(e.target.value))}
-              required
-              minLength={4}
-              maxLength={4}
-              autoComplete="off"
-              className="input-field--entry"
-            />
-            {error && <p className="entry-error">{error}</p>}
-            <button type="submit" disabled={loading} className="entry-enter">
-              {loading ? "[ ... ]" : "[ Sign in ]"}
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              className="entry-enter opacity-55"
-              onClick={resetForm}
-            >
-              [ Back ]
-            </button>
-          </form>
-        )}
+        </div>
       </div>
     </section>
   );
