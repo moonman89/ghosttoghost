@@ -18,7 +18,12 @@ function createFirebaseApp(): FirebaseApp {
     });
   }
 
-  // App Hosting: auto-configured via FIREBASE_WEBAPP_CONFIG at build time
+  // App Hosting: FIREBASE_WEBAPP_CONFIG is injected at build time
+  const webappConfig = process.env.FIREBASE_WEBAPP_CONFIG;
+  if (webappConfig) {
+    return initializeApp(JSON.parse(webappConfig));
+  }
+
   return initializeApp();
 }
 

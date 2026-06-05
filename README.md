@@ -9,7 +9,7 @@ Built with **Next.js** and **Firebase** (Auth, Firestore, Storage, Cloud Functio
 | **Firebase Console** | [console.firebase.google.com/project/ghosttoghost](https://console.firebase.google.com/project/ghosttoghost) |
 | **GitHub** | [github.com/moonman89/ghosttoghost](https://github.com/moonman89/ghosttoghost) |
 | **Local dev** | [http://localhost:3000](http://localhost:3000) (after `npm run dev`) |
-| **Public app URL** | Not deployed yet — see [Deploy](#deploy) below |
+| **Live app** | [ghosttoghost--ghosttoghost.us-central1.hosted.app](https://ghosttoghost--ghosttoghost.us-central1.hosted.app) |
 
 ---
 

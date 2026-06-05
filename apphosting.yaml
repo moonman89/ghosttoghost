@@ -43,10 +43,5 @@ env:
       - BUILD
       - RUNTIME
 
-  # Required for Firestore writes in production — set in Console or via secret:
-  # firebase apphosting:secrets:set APPCHECK_RECAPTCHA_SITE_KEY
-  - variable: NEXT_PUBLIC_APPCHECK_RECAPTCHA_SITE_KEY
-    value: ""
-    availability:
-      - BUILD
-      - RUNTIME
+  # Add in Console → Backend → Environment when App Check is ready:
+  # NEXT_PUBLIC_APPCHECK_RECAPTCHA_SITE_KEY
